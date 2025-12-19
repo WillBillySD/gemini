@@ -6,22 +6,34 @@ from .config import load_settings
 from .feeds import DEFAULT_FEEDS
 from .collect import collect_from_feeds, Story
 from .rank import rank_and_filter
-from .store import is_seen, mark_seen, already_sent_today, mark_sent_today
+from .store import mark_seen, already_sent_today, mark_sent_today, filter_seen_hashes, hash_url
 from .write_newsletter import write_newsletter
 from .send_email import send_via_sendgrid
 
 
 def _dedupe_new(stories: list[Story]) -> list[Story]:
-    out: list[Story] = []
-    seen_urls: set[str] = set()
+    # 1. Dedupe within the current list (by URL)
+    unique_candidates: list[Story] = []
+    seen_in_batch: set[str] = set()
     for s in stories:
-        if s.url in seen_urls:
-            continue
-        seen_urls.add(s.url)
-        if is_seen(s.url):
-            continue
-        out.append(s)
-    return out
+        if s.url not in seen_in_batch:
+            unique_candidates.append(s)
+            seen_in_batch.add(s.url)
+
+    if not unique_candidates:
+        return []
+
+    # 2. Check DB for these candidates in batch
+    candidate_hashes = [hash_url(s.url) for s in unique_candidates]
+    already_seen_hashes = filter_seen_hashes(candidate_hashes)
+
+    # 3. Filter out those that are in DB
+    final_list: list[Story] = []
+    for s in unique_candidates:
+        if hash_url(s.url) not in already_seen_hashes:
+            final_list.append(s)
+
+    return final_list
 
 
 def run() -> dict:

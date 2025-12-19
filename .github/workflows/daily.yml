@@ -42,6 +42,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add data/newsletter.db
+          git add -f data/newsletter.db
           git commit -m "Update database [skip ci]" || echo "No changes to commit"
-          git push
+          git push origin HEAD:${{ github.ref_name }}

@@ -46,13 +46,12 @@ def hash_url(url: str) -> str:
 def mark_seen(urls: list[str]) -> None:
     ensure_db()
     now = datetime.now(timezone.utc).isoformat()
+    data = [(hash_url(u), u, now) for u in urls]
     with sqlite3.connect(DB_PATH) as conn:
-        for u in urls:
-            h = hash_url(u)
-            conn.execute(
-                "INSERT OR IGNORE INTO seen_urls (url_hash, url, first_seen_utc) VALUES (?, ?, ?)",
-                (h, u, now),
-            )
+        conn.executemany(
+            "INSERT OR IGNORE INTO seen_urls (url_hash, url, first_seen_utc) VALUES (?, ?, ?)",
+            data,
+        )
         conn.commit()
 
 
@@ -62,6 +61,31 @@ def is_seen(url: str) -> bool:
     with sqlite3.connect(DB_PATH) as conn:
         row = conn.execute("SELECT 1 FROM seen_urls WHERE url_hash = ?", (h,)).fetchone()
         return row is not None
+
+
+def filter_seen_hashes(hashes: list[str]) -> set[str]:
+    """Returns a set of hashes from the input list that are ALREADY in the DB."""
+    ensure_db()
+    if not hashes:
+        return set()
+
+    # SQLite limit is usually 999 variables per query, so we chunk it if necessary.
+    # But for simplicity, assuming <999 for now or let sqlite3 handle it?
+    # Actually, let's just do a chunked approach to be safe.
+
+    seen = set()
+    chunk_size = 900
+    with sqlite3.connect(DB_PATH) as conn:
+        for i in range(0, len(hashes), chunk_size):
+            chunk = hashes[i : i + chunk_size]
+            placeholders = ",".join("?" for _ in chunk)
+            cursor = conn.execute(
+                f"SELECT url_hash FROM seen_urls WHERE url_hash IN ({placeholders})",
+                chunk,
+            )
+            for row in cursor:
+                seen.add(row[0])
+    return seen
 
 
 def already_sent_today(run_date: date) -> bool:
