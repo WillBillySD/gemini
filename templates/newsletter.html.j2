@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ subject }}</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.4;">
+    <h2 style="margin-bottom: 0;">{{ subject }}</h2>
+    {% if date_str %}
+      <div style="color:#555; margin-top: 4px;">{{ date_str }}</div>
+    {% endif %}
+
+    {% if top_headlines and top_headlines|length > 0 %}
+      <h3>Top headlines</h3>
+      <ul>
+        {% for h in top_headlines %}
+          <li>{{ h }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if stories and stories|length > 0 %}
+      <h3>Today’s stories</h3>
+      {% for s in stories %}
+        <div style="margin-bottom: 18px;">
+          <div style="font-weight: 700; font-size: 16px;">{{ s.title }}</div>
+          <div style="color:#666; font-size: 12px;">
+            {{ s.source }}{% if s.published %} • {{ s.published }}{% endif %}
+          </div>
+          <div style="margin-top: 6px;">
+            <a href="{{ s.url }}">{{ s.url }}</a>
+          </div>
+          {% if s.snippet %}
+            <div style="margin-top: 6px; color:#333;">{{ s.snippet }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if client_insight %}
+      <h3>Client-ready insight</h3>
+      <p>{{ client_insight }}</p>
+    {% endif %}
+
+    <hr />
+    <div style="color:#777; font-size: 12px;">
+      Generated automatically. Reply with feedback to tune topics, sources, and length.
+    </div>
+  </body>
+</html>

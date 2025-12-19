@@ -1,0 +1,26 @@
+{{ subject }}
+{% if date_str %}{{ date_str }}{% endif %}
+
+{% if top_headlines and top_headlines|length > 0 %}
+TOP HEADLINES
+{% for h in top_headlines -%}
+- {{ h }}
+{% endfor %}
+
+{% endif %}
+{% if stories and stories|length > 0 %}
+TODAY'S STORIES
+{% for s in stories -%}
+- {{ s.title }}
+  Source: {{ s.source }}{% if s.published %} | {{ s.published }}{% endif %}
+  Link: {{ s.url }}
+  {% if s.snippet %}Notes: {{ s.snippet }}{% endif %}
+
+{% endfor %}
+{% endif %}
+{% if client_insight %}
+CLIENT-READY INSIGHT
+{{ client_insight }}
+
+{% endif %}
+Generated automatically. Reply with feedback to tune topics, sources, and length.
