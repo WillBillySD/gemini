@@ -21,3 +21,35 @@ cp .env.example .env
 
 python -m src.main
 ```
+
+## Deploy to Azure App Service (quick)
+
+This repo includes a `Procfile` and a GitHub Actions workflow for deploying to Azure App Service.
+
+Replace `<APP_NAME>` and `<RG>` with your values before running the commands below.
+
+```bash
+# Login and select subscription
+az login
+az account set --subscription "<AZURE_SUBSCRIPTION_ID_OR_NAME>"
+
+# Create resource group and App Service plan (Linux)
+az group create --name <RG> --location eastus
+az appservice plan create --name gemini-plan --resource-group <RG> --is-linux --sku B1
+
+# Create the Web App (Python 3.12)
+az webapp create --resource-group <RG> --plan gemini-plan --name <APP_NAME> --runtime "PYTHON|3.12"
+
+# (Optional) Explicitly set the startup command (Procfile will usually be detected):
+az webapp config set --resource-group <RG> --name <APP_NAME> --startup-file "gunicorn -w 4 -b 0.0.0.0:8000 src.app:app"
+
+# Set required app settings (secrets)
+az webapp config appsettings set --resource-group <RG> --name <APP_NAME> --settings \
+	OPENAI_API_KEY="<value>" SENDGRID_API_KEY="<value>"
+
+# Zip-deploy from repository root
+zip -r deploy.zip . -x ".git/*"
+az webapp deployment source config-zip --resource-group <RG> --name <APP_NAME> --src deploy.zip
+```
+
+GitHub Actions: The repo contains `.github/workflows/azure-webapp.yml`. Provide either `AZURE_WEBAPP_PUBLISH_PROFILE` (recommended) or `AZURE_CREDENTIALS` (service principal JSON) and `APP_NAME` as repository secrets to enable CI/CD.
