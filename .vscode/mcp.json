@@ -1,0 +1,8 @@
+{
+    "servers": {
+        "gemini-local-server": {
+            "type": "http",
+            "url": "http://localhost:7071/mcp"
+        }
+    }
+}

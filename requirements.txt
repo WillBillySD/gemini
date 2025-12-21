@@ -7,5 +7,5 @@ openai==1.40.6
 
 black==24.3.0
 ruff==0.14.0
-isort==5.14.0
+isort==5.13.2
 pytest==7.4.0

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timezone
-from dateutil import parser as dateparser
+
 import feedparser
+from dateutil import parser as dateparser
 
 
 @dataclass
@@ -39,10 +40,20 @@ def collect_from_feeds(feed_urls: list[str], max_per_feed: int = 15) -> list[Sto
             link = (getattr(e, "link", "") or "").strip()
             if not title or not link:
                 continue
-            snippet = (getattr(e, "summary", None) or getattr(e, "description", None) or None)
+            snippet = (
+                getattr(e, "summary", None) or getattr(e, "description", None) or None
+            )
             if snippet:
                 snippet = " ".join(snippet.split())
                 snippet = snippet[:600]
             published = _parse_published(e)
-            stories.append(Story(title=title, url=link, source=str(source), published=published, snippet=snippet))
+            stories.append(
+                Story(
+                    title=title,
+                    url=link,
+                    source=str(source),
+                    published=published,
+                    snippet=snippet,
+                )
+            )
     return stories

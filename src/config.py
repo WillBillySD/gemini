@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -41,7 +42,11 @@ class Settings:
 
 def load_settings() -> Settings:
     feed_override = os.getenv("FEED_URLS", "").strip()
-    feed_urls = [u.strip() for u in feed_override.split(",") if u.strip()] if feed_override else []
+    feed_urls = (
+        [u.strip() for u in feed_override.split(",") if u.strip()]
+        if feed_override
+        else []
+    )
 
     return Settings(
         openai_api_key=_env("OPENAI_API_KEY"),
