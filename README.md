@@ -53,3 +53,25 @@ az webapp deployment source config-zip --resource-group <RG> --name <APP_NAME> -
 ```
 
 GitHub Actions: The repo contains `.github/workflows/azure-webapp.yml`. Provide either `AZURE_WEBAPP_PUBLISH_PROFILE` (recommended) or `AZURE_CREDENTIALS` (service principal JSON) and `APP_NAME` as repository secrets to enable CI/CD.
+
+## Setting GitHub Secrets
+
+Add the following repository secrets (Settings → Secrets → Actions) so CI/CD and the app can access required values:
+
+- `APP_NAME` — your Azure Web App name (globally unique).
+- `AZURE_WEBAPP_PUBLISH_PROFILE` — recommended: copy the publish profile XML from the Azure Portal (App Service → Get publish profile) and paste it here.
+- `AZURE_CREDENTIALS` — alternative: a Service Principal JSON created with `az ad sp create-for-rbac` (used by `azure/login@v1`).
+- `OPENAI_API_KEY` — your OpenAI key.
+- `SENDGRID_API_KEY` — your SendGrid API key.
+
+Quick commands to obtain credentials (replace placeholders):
+
+```bash
+# Get a publish profile (returns XML):
+az webapp deployment list-publishing-profiles --name <APP_NAME> --resource-group <RG> --query "[0].xml" -o tsv
+
+# Or create a Service Principal (example JSON):
+az ad sp create-for-rbac --name "github-deploy-<APP_NAME>" --role contributor --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG> -o json
+```
+
+Paste the resulting values into GitHub Secrets. The Actions workflow will use whichever credential you supply (`AZURE_WEBAPP_PUBLISH_PROFILE` preferred).
