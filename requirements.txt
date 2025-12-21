@@ -9,3 +9,8 @@ black==24.3.0
 ruff==0.14.0
 isort==5.13.2
 pytest==7.4.0
+
+# HTTP server for App Service
+fastapi==0.101.1
+uvicorn==0.23.2
+gunicorn==21.2.0
