@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 DB_PATH = Path("data/newsletter.db")
@@ -49,10 +49,11 @@ def mark_seen(urls: list[str]) -> None:
     with sqlite3.connect(DB_PATH) as conn:
         for u in urls:
             h = hash_url(u)
-            conn.execute(
-                "INSERT OR IGNORE INTO seen_urls (url_hash, url, first_seen_utc) VALUES (?, ?, ?)",
-                (h, u, now),
+            sql = (
+                "INSERT OR IGNORE INTO seen_urls (url_hash, url, first_seen_utc) "
+                "VALUES (?, ?, ?)"
             )
+            conn.execute(sql, (h, u, now))
         conn.commit()
 
 
@@ -60,7 +61,10 @@ def is_seen(url: str) -> bool:
     ensure_db()
     h = hash_url(url)
     with sqlite3.connect(DB_PATH) as conn:
-        row = conn.execute("SELECT 1 FROM seen_urls WHERE url_hash = ?", (h,)).fetchone()
+        row = (
+            conn.execute("SELECT 1 FROM seen_urls WHERE url_hash = ?", (h,))
+            .fetchone()
+        )
         return row is not None
 
 
@@ -68,7 +72,10 @@ def already_sent_today(run_date: date) -> bool:
     ensure_db()
     key = run_date.isoformat()
     with sqlite3.connect(DB_PATH) as conn:
-        row = conn.execute("SELECT 1 FROM sent_runs WHERE run_date = ?", (key,)).fetchone()
+        row = (
+            conn.execute("SELECT 1 FROM sent_runs WHERE run_date = ?", (key,))
+            .fetchone()
+        )
         return row is not None
 
 

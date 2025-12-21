@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import date
 
+from .collect import Story, collect_from_feeds
 from .config import load_settings
 from .feeds import DEFAULT_FEEDS
-from .collect import collect_from_feeds, Story
 from .rank import rank_and_filter
-from .store import is_seen, mark_seen, already_sent_today, mark_sent_today
-from .write_newsletter import write_newsletter
 from .send_email import send_via_sendgrid
+from .store import already_sent_today, is_seen, mark_seen, mark_sent_today
+from .write_newsletter import write_newsletter
 
 
 def _dedupe_new(stories: list[Story]) -> list[Story]:

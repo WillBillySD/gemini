@@ -4,26 +4,63 @@ import re
 
 from .collect import Story
 
-
 # Lightweight keyword-based relevance scoring.
 # (You can later replace with embeddings or a classifier.)
 AI_TERMS = [
-    "ai", "artificial intelligence", "llm", "chatgpt", "gpt", "anthropic", "claude",
-    "openai", "gemini", "copilot", "model", "inference", "rag", "agents"
+    "ai",
+    "artificial intelligence",
+    "llm",
+    "chatgpt",
+    "gpt",
+    "anthropic",
+    "claude",
+    "openai",
+    "gemini",
+    "copilot",
+    "model",
+    "inference",
+    "rag",
+    "agents",
 ]
 HOSTING_TERMS = [
-    "hosting", "cloud", "aws", "azure", "gcp", "google cloud", "cdn", "edge",
-    "kubernetes", "k8s", "vps", "server", "datacenter", "infrastructure", "devops",
-    "security", "ddos", "waf", "load balancer"
+    "hosting",
+    "cloud",
+    "aws",
+    "azure",
+    "gcp",
+    "google cloud",
+    "cdn",
+    "edge",
+    "kubernetes",
+    "k8s",
+    "vps",
+    "server",
+    "datacenter",
+    "infrastructure",
+    "devops",
+    "security",
+    "ddos",
+    "waf",
+    "load balancer",
 ]
 MARKETING_TERMS = [
-    "marketing", "seo", "search", "content", "ads", "ppc", "conversion", "landing page",
-    "email", "crm", "automation", "analytics", "growth", "brand"
+    "marketing",
+    "seo",
+    "search",
+    "content",
+    "ads",
+    "ppc",
+    "conversion",
+    "landing page",
+    "email",
+    "crm",
+    "automation",
+    "analytics",
+    "growth",
+    "brand",
 ]
 
-NEGATIVE_HINTS = [
-    "sports", "celebrity", "gossip", "horoscope", "recipe", "coupon"
-]
+NEGATIVE_HINTS = ["sports", "celebrity", "gossip", "horoscope", "recipe", "coupon"]
 
 
 def _norm(s: str) -> str:
@@ -47,7 +84,9 @@ def score_story(story: Story) -> float:
     return max(0.0, min(1.0, raw / 10.0))
 
 
-def rank_and_filter(stories: list[Story], min_score: float, top_n: int) -> list[tuple[Story, float]]:
+def rank_and_filter(
+    stories: list[Story], min_score: float, top_n: int
+) -> list[tuple[Story, float]]:
     scored = [(s, score_story(s)) for s in stories]
     scored = [x for x in scored if x[1] >= min_score]
     scored.sort(key=lambda x: x[1], reverse=True)

@@ -10,7 +10,6 @@ from openai import OpenAI
 from .collect import Story
 from .prompts import SYSTEM_PROMPT, WRITER_PROMPT_TEMPLATE
 
-
 env = Environment(
     loader=FileSystemLoader("templates"),
     autoescape=select_autoescape(["html", "xml"]),
@@ -29,9 +28,13 @@ def write_newsletter(openai_api_key: str, stories: list[Story]) -> dict:
     client = OpenAI(api_key=openai_api_key)
 
     date_str = datetime.now().strftime("%B %d, %Y")
-    stories_json = json.dumps([asdict(s) for s in stories], ensure_ascii=False, indent=2)
+    stories_json = json.dumps(
+        [asdict(s) for s in stories], ensure_ascii=False, indent=2
+    )
 
-    user_prompt = WRITER_PROMPT_TEMPLATE.format(date_str=date_str, stories_json=stories_json)
+    user_prompt = WRITER_PROMPT_TEMPLATE.format(
+        date_str=date_str, stories_json=stories_json
+    )
 
     # Request the model to output JSON only.
     resp = client.chat.completions.create(
@@ -49,7 +52,8 @@ def write_newsletter(openai_api_key: str, stories: list[Story]) -> dict:
         raise ValueError("OpenAI returned empty content")
     data = json.loads(content)
 
-    # If model didn't provide bodies, fall back to template rendering (unlikely, but safe).
+    # If model didn't provide bodies, fall back to template rendering.
+    # This is unlikely but safe to handle.
     if not data.get("html_body") or not data.get("text_body"):
         sections = {
             "date_str": date_str,
@@ -57,7 +61,8 @@ def write_newsletter(openai_api_key: str, stories: list[Story]) -> dict:
             "stories": [asdict(s) for s in stories],
             "client_insight": "",
         }
-        html, text = _render_templates(data.get("subject", f"AI Daily Brief — {date_str}"), sections)
+        subject = data.get("subject", f"AI Daily Brief - {date_str}")
+        html, text = _render_templates(subject, sections)
         data["html_body"] = html
         data["text_body"] = text
 

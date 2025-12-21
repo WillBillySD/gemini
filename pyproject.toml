@@ -1,0 +1,30 @@
+[project]
+name = "1031weather-scaffold-test"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==24.3.0",
+    "ruff==0.14.0",
+    "isort==5.14.0",
+    "pytest==7.4.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W", "C", "I", "RUF"]
+fix = true
+
+[tool.isort]
+profile = "black"
