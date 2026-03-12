@@ -122,6 +122,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Site monitor runtime data
+data/*.db
+
 # Azure Functions artifacts
 bin
 obj
