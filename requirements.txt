@@ -1,9 +1,15 @@
-feedparser==6.0.11
 python-dateutil==2.9.0.post0
 requests==2.32.3
 jinja2==3.1.4
 python-dotenv==1.0.1
 openai==1.40.6
+
+# Site monitor
+flask==3.0.3
+apscheduler==3.10.4
+beautifulsoup4==4.12.3
+twilio==9.3.2
+lxml==5.2.2
 
 black==24.3.0
 ruff==0.14.0
