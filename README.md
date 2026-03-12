@@ -1,14 +1,14 @@
-# AI Daily Brief
+# Site Monitor + SMS Alerts
 
-Daily automated newsletter generator (AI + web hosting + marketing). Collects fresh stories, filters/ranks, writes a client-ready brief with citations (source links), and emails it to you via SendGrid.
+Watch any website or RSS feed for new posts and get an instant SMS text alert via Twilio.
 
 ## What it does
-- Pulls items from curated RSS feeds (AI + hosting/cloud + marketing)
-- Filters + ranks by relevance
-- Deduplicates (won't resend the same URLs)
-- Generates a daily newsletter (HTML + plain text) using OpenAI
-- Emails to you (approval mode) via SendGrid
-- Stores sent history in SQLite
+- Add any RSS/Atom feed or web page URL to monitor
+- Detects new posts/content changes automatically
+- Texts your cell phone the moment something new appears
+- Deduplicates — never alerts twice for the same post
+- Simple Bootstrap web UI to manage sites and view alert history
+- Runs on a schedule (default every 30 min) + manual "Check Now" button
 
 ## Quick start (local)
 ```bash
@@ -17,16 +17,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# edit .env with OPENAI_API_KEY + SENDGRID_API_KEY
+# Edit .env — fill in your Twilio credentials and cell number
 
-python -m src.main
+python monitor.py
+# → http://localhost:5000
 ```
 
-## Deploy to Azure App Service (quick)
+## Environment variables
 
-This repo includes a `Procfile` and a GitHub Actions workflow for deploying to Azure App Service.
+| Variable | Required | Description |
+|---|---|---|
+| `TWILIO_ACCOUNT_SID` | Yes | From [console.twilio.com](https://console.twilio.com) |
+| `TWILIO_AUTH_TOKEN` | Yes | From Twilio console |
+| `TWILIO_FROM_NUMBER` | Yes | Your Twilio phone number (e.g. `+15551234567`) |
+| `ALERT_TO_NUMBER` | Yes | Your cell phone number to receive texts |
+| `CHECK_INTERVAL_MINUTES` | No | How often to check sites (default: `30`) |
+| `SECRET_KEY` | No | Flask session secret (any random string) |
+| `PORT` | No | Web server port (default: `5000`) |
 
-Replace `<APP_NAME>` and `<RG>` with your values before running the commands below.
+## Deploy to Azure App Service
 
 ```bash
 # Login and select subscription
@@ -35,43 +44,48 @@ az account set --subscription "<AZURE_SUBSCRIPTION_ID_OR_NAME>"
 
 # Create resource group and App Service plan (Linux)
 az group create --name <RG> --location eastus
-az appservice plan create --name gemini-plan --resource-group <RG> --is-linux --sku B1
+az appservice plan create --name site-monitor-plan --resource-group <RG> --is-linux --sku B1
 
 # Create the Web App (Python 3.12)
-az webapp create --resource-group <RG> --plan gemini-plan --name <APP_NAME> --runtime "PYTHON|3.12"
+az webapp create --resource-group <RG> --plan site-monitor-plan --name <APP_NAME> --runtime "PYTHON|3.12"
 
-# (Optional) Explicitly set the startup command (Procfile will usually be detected):
-az webapp config set --resource-group <RG> --name <APP_NAME> --startup-file "gunicorn -w 4 -b 0.0.0.0:8000 src.app:app"
-
-# Set required app settings (secrets)
+# Set required app settings (Twilio credentials)
 az webapp config appsettings set --resource-group <RG> --name <APP_NAME> --settings \
-	OPENAI_API_KEY="<value>" SENDGRID_API_KEY="<value>"
+  TWILIO_ACCOUNT_SID="<value>" \
+  TWILIO_AUTH_TOKEN="<value>" \
+  TWILIO_FROM_NUMBER="<value>" \
+  ALERT_TO_NUMBER="<value>" \
+  SECRET_KEY="<random-string>"
 
-# Zip-deploy from repository root
-zip -r deploy.zip . -x ".git/*"
+# Zip-deploy
+zip -r deploy.zip . -x ".git/*" "*.pyc" "__pycache__/*" "data/*.db"
 az webapp deployment source config-zip --resource-group <RG> --name <APP_NAME> --src deploy.zip
 ```
 
-GitHub Actions: The repo contains `.github/workflows/azure-webapp.yml`. Provide either `AZURE_WEBAPP_PUBLISH_PROFILE` (recommended) or `AZURE_CREDENTIALS` (service principal JSON) and `APP_NAME` as repository secrets to enable CI/CD.
+## CI/CD via GitHub Actions
 
-## Setting GitHub Secrets
+The repo includes `.github/workflows/azure-webapp.yml`. Push to `main` to auto-deploy.
 
-Add the following repository secrets (Settings → Secrets → Actions) so CI/CD and the app can access required values:
+Add these repository secrets (Settings → Secrets → Actions):
 
-- `APP_NAME` — your Azure Web App name (globally unique).
-- `AZURE_WEBAPP_PUBLISH_PROFILE` — recommended: copy the publish profile XML from the Azure Portal (App Service → Get publish profile) and paste it here.
-- `AZURE_CREDENTIALS` — alternative: a Service Principal JSON created with `az ad sp create-for-rbac` (used by `azure/login@v1`).
-- `OPENAI_API_KEY` — your OpenAI key.
-- `SENDGRID_API_KEY` — your SendGrid API key.
-
-Quick commands to obtain credentials (replace placeholders):
+| Secret | Description |
+|---|---|
+| `APP_NAME` | Your Azure Web App name |
+| `AZURE_RG` | Your Azure resource group name |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | Publish profile XML from Azure Portal *(recommended)* |
+| `AZURE_CREDENTIALS` | Service principal JSON *(alternative)* |
+| `TWILIO_ACCOUNT_SID` | Twilio account SID |
+| `TWILIO_AUTH_TOKEN` | Twilio auth token |
+| `TWILIO_FROM_NUMBER` | Twilio phone number |
+| `ALERT_TO_NUMBER` | Your cell phone number |
+| `SECRET_KEY` | Flask secret key |
+| `CHECK_INTERVAL_MINUTES` | Check frequency in minutes (default 30) |
 
 ```bash
-# Get a publish profile (returns XML):
+# Get publish profile:
 az webapp deployment list-publishing-profiles --name <APP_NAME> --resource-group <RG> --query "[0].xml" -o tsv
 
-# Or create a Service Principal (example JSON):
-az ad sp create-for-rbac --name "github-deploy-<APP_NAME>" --role contributor --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG> -o json
+# Or create a Service Principal:
+az ad sp create-for-rbac --name "github-deploy-<APP_NAME>" --role contributor \
+  --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG> -o json
 ```
-
-Paste the resulting values into GitHub Secrets. The Actions workflow will use whichever credential you supply (`AZURE_WEBAPP_PUBLISH_PROFILE` preferred).

@@ -28,7 +28,23 @@ jobs:
 
       - name: Zip application
         run: |
-          zip -r deploy.zip . -x ".git/*" "*.pyc" "__pycache__/*"
+          zip -r deploy.zip . -x ".git/*" "*.pyc" "__pycache__/*" "data/*.db"
+
+      - name: Set App Settings (Twilio + Flask)
+        if: secrets.AZURE_WEBAPP_PUBLISH_PROFILE != '' || secrets.AZURE_CREDENTIALS != ''
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az webapp config appsettings set \
+              --name ${{ secrets.APP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RG }} \
+              --settings \
+                TWILIO_ACCOUNT_SID="${{ secrets.TWILIO_ACCOUNT_SID }}" \
+                TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}" \
+                TWILIO_FROM_NUMBER="${{ secrets.TWILIO_FROM_NUMBER }}" \
+                ALERT_TO_NUMBER="${{ secrets.ALERT_TO_NUMBER }}" \
+                CHECK_INTERVAL_MINUTES="${{ secrets.CHECK_INTERVAL_MINUTES || '30' }}" \
+                SECRET_KEY="${{ secrets.SECRET_KEY }}"
 
       - name: Deploy with publish profile
         if: secrets.AZURE_WEBAPP_PUBLISH_PROFILE != ''
